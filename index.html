@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<title>Мой тренажёр</title>
+<style>
+:root{color-scheme:dark;--bg:#090909;--panel:#111;--line:#292929;--muted:#aaa;--text:#f7f7f7;--accent:#fff;--green:#20d477}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:760px;margin:auto;padding:24px 16px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
+h1{font-size:29px;line-height:1.15;margin:0 0 8px}p{line-height:1.5}.muted{color:var(--muted)}.small{font-size:13px}
+.panel{border:1px solid var(--line);border-radius:26px;padding:22px;background:#0b0b0b}
+label{display:block;font-size:13px;color:var(--muted);margin:14px 0 7px}
+select,input,textarea{width:100%;background:#0b0b0b;color:var(--text);border:1px solid #444;border-radius:14px;padding:13px 14px;font:inherit}
+textarea{min-height:88px;resize:vertical}button,.filebtn{border:1px solid #444;border-radius:999px;padding:13px 16px;background:#111;color:var(--text);font:inherit;font-weight:600;cursor:pointer;text-align:center}
+button.primary{background:#f5f5f5;color:#111;border-color:#f5f5f5}button:disabled{opacity:.35;cursor:default}
+button:active{transform:scale(.99)}.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.pill{display:inline-block;background:#222;border-radius:999px;padding:6px 10px;font-size:12px;color:#ddd}
+.meta{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:22px 0 12px}.progress{height:7px;border-radius:99px;background:#292929;overflow:hidden;margin-bottom:28px}.bar{height:100%;width:0;background:#f5f5f5;transition:width .2s}
+.question{font-size:clamp(24px,5vw,34px);font-weight:700;line-height:1.25;margin:0 0 26px;white-space:pre-wrap}
+.answer{border:1px solid #292929;border-radius:22px;padding:18px 20px;margin-bottom:18px;white-space:pre-wrap;line-height:1.5;font-size:19px}.answer strong{display:block;color:var(--green);margin-bottom:8px}
+.stats{border-top:1px solid var(--line);margin-top:28px;padding-top:22px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tabs button{font-size:13px;padding:9px 12px}.tabs button.active{background:#e9e9e9;color:#111}
+details{border-top:1px solid var(--line);padding:14px 0}summary{cursor:pointer;font-weight:650}.manage{margin-top:22px}.hidden{display:none!important}.notice{border:1px solid #333;background:#151515;border-radius:14px;padding:12px;margin:12px 0;font-size:13px;color:#ccc}
+.question-list{padding-left:22px}.question-list li{margin:9px 0;line-height:1.4}.danger{border-color:#713838}.footer{margin-top:16px;color:#888;font-size:12px;line-height:1.5}
+@media(min-width:600px){main{padding-top:38px}.panel{padding:30px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><h1>Мой тренажёр</h1><div class="muted">вспоминай ответ · открывай · повторяй</div></div>
+    <span class="pill">МОЯ БАЗА</span>
+  </div>
+  <section class="panel">
+    <label for="lesson">ВЫБЕРИ УРОК</label>
+    <select id="lesson"></select>
+    <div class="meta"><span id="lessonTag" class="pill">Урок</span><span id="counter" class="muted">Вопрос 1 из 1</span></div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+    <div id="question" class="question">Загрузка…</div>
+    <div id="answer" class="answer hidden"><strong>Ответ</strong><span id="answerText"></span></div>
+    <button id="reveal" class="primary" style="width:100%;margin-bottom:16px">Показать ответ</button>
+    <div class="row">
+      <button id="prev">← Назад</button><button id="next" class="primary">Далее →</button>
+    </div>
+    <div class="stats">
+      <div><div id="seen" style="font-size:25px;font-weight:700">0 / 0</div><div class="muted small">вопросов просмотрено</div></div>
+      <button id="oral">Устный зачёт</button>
+    </div>
+    <div id="oralNote" class="notice hidden">Режим устного зачёта: произнеси ответ вслух, затем открой ответ и оцени себя.</div>
+    <div class="row" style="margin-top:12px"><button id="known">✓ Знаю</button><button id="again">↻ Повторить</button></div>
+  </section>
+
+  <section class="panel manage">
+    <h2 style="margin-top:0">Моя база вопросов</h2>
+    <p class="muted small">Добавляй уроки и вопросы прямо здесь. Дизайн менять не нужно — новые карточки появятся автоматически.</p>
+    <div class="tabs"><button id="showBulk" class="active">✦ Вставить весь конспект</button><button id="showAdd">＋ Один вопрос</button><button id="showImport">Импорт / экспорт</button><button id="showList">Список вопросов</button></div>
+    <div id="bulkPane">
+      <p class="muted small">Вставь сюда весь материал целиком. Поддерживаются заголовки «Урок 1: …», нумерация и строки «Ответ: …». Сайт сам разобьёт текст на карточки.</p>
+      <label for="bulkText">ВЕСЬ МАТЕРИАЛ К ЗАЧЁТУ</label>
+      <textarea id="bulkText" style="min-height:240px" placeholder="Урок 1: Византия&#10;1. Какая столица Византии?&#10;Ответ: Константинополь.&#10;2. Кто…&#10;Ответ: …"></textarea>
+      <button id="parseBtn" class="primary" style="width:100%;margin-top:12px">Разобрать и создать карточки</button>
+      <div id="parseStatus" class="notice hidden"></div>
+    </div>
+    <div id="addPane" class="hidden">
+      <label for="newLesson">УРОК</label><input id="newLesson" placeholder="Например: Сарматы">
+      <label for="newQ">ВОПРОС</label><textarea id="newQ" placeholder="Напиши вопрос…"></textarea>
+      <label for="newA">ОТВЕТ</label><textarea id="newA" placeholder="Напиши правильный ответ…"></textarea>
+      <button id="addBtn" class="primary" style="width:100%;margin-top:12px">Сохранить вопрос</button>
+      <div id="addStatus" class="notice hidden"></div>
+    </div>
+    <div id="importPane" class="hidden">
+      <p class="small muted">Для импорта вставь JSON в поле ниже. Для экспорта нажми кнопку — скачается резервная копия всех уроков и вопросов.</p>
+      <button id="exportBtn" class="primary" style="width:100%">Скачать резервную копию</button>
+      <label for="importText">ИМПОРТ JSON</label><textarea id="importText" placeholder='Вставь сюда файл JSON в виде текста'></textarea>
+      <button id="importBtn" style="width:100%;margin-top:10px">Импортировать базу</button>
+      <div id="importStatus" class="notice hidden"></div>
+    </div>
+    <div id="listPane" class="hidden"><div id="listContent"></div></div>
+    <div class="footer">Вопросы и прогресс хранятся в памяти этого браузера на устройстве. Регулярно скачивай резервную копию, чтобы не потерять базу.</div>
+  </section>
+</main>
+<script>
+const starter = {
+ "Византия":[
+  {q:"Какая столица Византийской империи?",a:"Константинополь."},
+  {q:"Как назывался знаменитый храм Константинополя?",a:"Собор Святой Софии."}
+ ],
+ "Киевская Русь":[
+  {q:"Кто был первым князем из династии Рюриковичей?",a:"Рюрик."},
+  {q:"В каком году произошло крещение Руси?",a:"988 год."}
+ ],
+ "Феодализм I":[
+  {q:"Кто был заинтересован в прекращении феодальных распрей?",a:"Церковь и король."},
+  {q:"Что представлял собой феодализм?",a:"Общественный строй, основанный на земельных владениях и зависимости крестьян."}
+ ],
+ "Феодализм II":[
+  {q:"Какая новая общественная группа появилась в городах в IX–XI веках и занималась только торговым обменом?",a:"Купцы."}
+ ]
+};
+const $=id=>document.getElementById(id);
+let db=load("studyDeck",starter), progress=load("studyProgress",{}), lesson="", index=0, revealed=false, oral=false, visited={};
+function load(key,fallback){try{const x=localStorage.getItem(key);return x?JSON.parse(x):JSON.parse(JSON.stringify(fallback))}catch(e){return JSON.parse(JSON.stringify(fallback))}}
+function save(){try{localStorage.setItem("studyDeck",JSON.stringify(db));localStorage.setItem("studyProgress",JSON.stringify(progress))}catch(e){}}
+function lessons(){return Object.keys(db).filter(k=>Array.isArray(db[k])&&db[k].length)}
+function ensureLesson(){const ls=lessons();if(!ls.length){db["Новый урок"]=[];lesson="Новый урок"}else if(!db[lesson]||!db[lesson].length)lesson=ls[0]}
+function renderLessons(){ensureLesson();$("lesson").innerHTML="";lessons().forEach(l=>{const o=document.createElement("option");o.value=l;o.textContent=l;$("lesson").appendChild(o)});$("lesson").value=lesson}
+function current(){return (db[lesson]||[])[index]}
+function render(){renderLessons();const list=db[lesson]||[];if(!list.length){$("question").textContent="В этом уроке пока нет вопросов."; $("answer").classList.add("hidden");$("reveal").disabled=true;$("prev").disabled=true;$("next").disabled=true;$("counter").textContent="0 вопросов";$("bar").style.width="0%";$("seen").textContent="0 / 0";return}
+index=Math.max(0,Math.min(index,list.length-1));const c=current();$("question").textContent=c.q;$("answerText").textContent=c.a;$("answer").classList.toggle("hidden",!revealed);$("reveal").textContent=revealed?"Скрыть ответ":"Показать ответ";$("reveal").disabled=false;$("prev").disabled=index===0;$("next").disabled=index===list.length-1;$("counter").textContent=`Вопрос ${index+1} из ${list.length}`;$("lessonTag").textContent=lesson;$("bar").style.width=((index+1)/list.length*100)+"%";const seen=(progress[lesson]&&progress[lesson].seen)||[];$("seen").textContent=`${seen.length} / ${list.length}`;visited[lesson+":"+index]=true;$("oralNote").classList.toggle("hidden",!oral);$("oral").textContent=oral?"Обычный режим":"Устный зачёт";save()}
+$("lesson").addEventListener("change",e=>{lesson=e.target.value;index=0;revealed=false;render()});
+$("reveal").onclick=()=>{revealed=!revealed;render()};
+$("prev").onclick=()=>{index--;revealed=false;render()};
+$("next").onclick=()=>{index++;revealed=false;render()};
+$("oral").onclick=()=>{oral=!oral;revealed=false;render()};
+function rate(kind){progress[lesson]=progress[lesson]||{seen:[],known:[],again:[]};const p=progress[lesson];if(!p.seen.includes(index))p.seen.push(index);p.known=p.known.filter(n=>n!==index);p.again=p.again.filter(n=>n!==index);if(kind==="known")p.known.push(index);else p.again.push(index);save();render();if(kind==="again"){const next=p.again.find(n=>n<index);if(next!==undefined){index=next;revealed=false;render()}}}
+$("known").onclick=()=>rate("known");$("again").onclick=()=>rate("again");
+function showPane(name){["bulk","add","import","list"].forEach(n=>{$(n+"Pane").classList.toggle("hidden",n!==name);$("show"+n[0].toUpperCase()+n.slice(1)).classList.toggle("active",n===name) });if(name==="list")renderList()}
+$("showBulk").onclick=()=>showPane("bulk");$("showAdd").onclick=()=>showPane("add");$("showImport").onclick=()=>showPane("import");$("showList").onclick=()=>showPane("list");
+function parseMaterial(raw){
+  const lines=raw.replace(/\r/g,"").split("\n");
+  const parsed={}; let currentLesson="Импортированный урок"; let pendingQ=null; let currentA=[];
+  function flush(){if(pendingQ!==null){const answer=currentA.join(" ").trim();if(answer) (parsed[currentLesson]||(parsed[currentLesson]=[])).push({q:pendingQ.trim(),a:answer});pendingQ=null;currentA=[]}}
+  for(let line of lines){
+    line=line.trim(); if(!line)continue;
+    const heading=line.match(/^(?:Урок\s*\d+\s*[:.—-]\s*|Тема\s*\d*\s*[:.—-]\s*)(.+)$/i);
+    if(heading){flush();currentLesson=heading[1].trim();continue}
+    if(/^(?:EasyENT|\d+\s*)$/i.test(line))continue;
+    const answerMatch=line.match(/^Ответ\s*:\s*(.*)$/i);
+    if(answerMatch){if(pendingQ!==null){currentA.push(answerMatch[1]);flush()}else if(answerMatch[1]){currentA.push(answerMatch[1])}continue}
+    const numbered=line.match(/^\s*(\d{1,3})[.)]\s*(.*)$/);
+    if(numbered){
+      flush();
+      let body=numbered[2].trim();
+      const inline=body.match(/^(.*?)\s*(?:—|–)\s*Ответ\s*:\s*(.+)$/i);
+      if(inline){(parsed[currentLesson]||(parsed[currentLesson]=[])).push({q:inline[1].trim(),a:inline[2].trim()});continue}
+      pendingQ=body;currentA=[];continue;
+    }
+    if(pendingQ===null){
+      // The supplied format often places a question on one line and its answer on the next line.
+      pendingQ=line;
+    } else {
+      // Allow wrapped multi-line questions/answers; an explicit "Ответ:" marks the answer.
+      currentA.push(line);
+    }
+  }
+  flush();
+  // If a question and answer are separated into plain lines without the "Ответ:" marker,
+  // don't silently guess; the supported recommended format uses "Ответ:".
+  return parsed;
+}
+$("parseBtn").onclick=()=>{
+  const status=$("parseStatus"); const parsed=parseMaterial($("bulkText").value);
+  const count=Object.values(parsed).reduce((n,arr)=>n+arr.length,0);
+  if(!count){status.textContent="Не удалось найти пары. Проверь, что у каждого вопроса есть строка «Ответ: …», а уроки начинаются с «Урок 1: Название».";status.classList.remove("hidden");return}
+  const replace=confirm("Найдено карточек: "+count+" в уроках: "+Object.keys(parsed).join(", ")+".\n\nНажми OK, чтобы заменить текущую базу, или Cancel, чтобы добавить карточки к существующей.");
+  if(replace){db=parsed;progress={}}
+  else {for(const [l,items] of Object.entries(parsed)){if(!db[l])db[l]=[];db[l].push(...items)}}
+  lesson=Object.keys(parsed)[0];index=0;revealed=false;save();render();
+  status.textContent="Готово! Создано карточек: "+count+". Проверь первые несколько вопросов, особенно если в конспекте есть переносы строк.";status.classList.remove("hidden");
+};
+$("addBtn").onclick=()=>{const l=$("newLesson").value.trim(),q=$("newQ").value.trim(),a=$("newA").value.trim();if(!l||!q||!a){$("addStatus").textContent="Заполни название урока, вопрос и ответ."; $("addStatus").classList.remove("hidden");return}if(!db[l])db[l]=[];db[l].push({q,a});lesson=l;index=db[l].length-1;revealed=false;["newLesson","newQ","newA"].forEach(id=>$(id).value="");$("addStatus").textContent="Вопрос сохранён!";$("addStatus").classList.remove("hidden");save();render()};
+function renderList(){const box=$("listContent");box.innerHTML="";lessons().forEach(l=>{const h=document.createElement("h3");h.textContent=l;box.appendChild(h);const ol=document.createElement("ol");ol.className="question-list";db[l].forEach((item,i)=>{const li=document.createElement("li");li.textContent=item.q+" — "+item.a;ol.appendChild(li)});box.appendChild(ol)})}
+$("exportBtn").onclick=()=>{const data={version:1,lessons:db,progress};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="moy-trenazher-backup.json";a.click();URL.revokeObjectURL(url)};
+$("importBtn").onclick=()=>{const msg=$("importStatus");try{const data=JSON.parse($("importText").value);const incoming=data.lessons||data;if(!incoming||typeof incoming!=="object"||Array.isArray(incoming))throw Error("Неверный формат");for(const [l,items] of Object.entries(incoming)){if(!Array.isArray(items)||!items.every(x=>x&&typeof x.q==="string"&&typeof x.a==="string"))throw Error("В каждом уроке должны быть вопросы q и ответы a");}db=incoming;if(data.progress)progress=data.progress;lesson=lessons()[0]||"";index=0;revealed=false;save();render();msg.textContent="Импорт завершён.";msg.classList.remove("hidden")}catch(e){msg.textContent="Не получилось импортировать. Проверь JSON и формат вопросов.";msg.classList.remove("hidden")}};
+render();
+</script>
+</body>
+</html>
